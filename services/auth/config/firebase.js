@@ -19,13 +19,20 @@ const getServiceAccount = () => {
 		}
 	}
 
-	const filePath = path.join(__dirname, "../serviceAccountKey.json")
-	if (fs.existsSync(filePath)) {
-		try {
-			const content = fs.readFileSync(filePath, "utf-8")
-			return JSON.parse(content)
-		} catch (err) {
-			console.error("Failed to read serviceAccountKey.json file:", err.message)
+	const possiblePaths = [
+		path.join(process.cwd(), "serviceAccountKey.json"),
+		path.join(__dirname, "../serviceAccountKey.json"),
+		path.join(process.cwd(), "services/auth/serviceAccountKey.json")
+	]
+
+	for (const filePath of possiblePaths) {
+		if (fs.existsSync(filePath)) {
+			try {
+				const content = fs.readFileSync(filePath, "utf-8")
+				return JSON.parse(content)
+			} catch (err) {
+				console.error(`Failed to read serviceAccountKey.json at ${filePath}:`, err.message)
+			}
 		}
 	}
 
