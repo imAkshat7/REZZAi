@@ -20,15 +20,15 @@ const proxyOptions = {
     limit: "10mb"
 }
 
-app.use("/auth", proxy(process.env.AUTH_SERVICE || "http://localhost:8001", proxyOptions))
+app.use("/auth", proxy(process.env.AUTH_SERVICE || "http://127.0.0.1:8001", proxyOptions))
 app.use("/chat", protect, (req, res, next) => {
     req.headers["x-user-id"] = req.user.userId
     next()
-}, proxy(process.env.CHAT_SERVICE || "http://localhost:8002", proxyOptions))
+}, proxy(process.env.CHAT_SERVICE || "http://127.0.0.1:8002", proxyOptions))
 app.use("/agent", protect, (req, res, next) => {
     req.headers["x-user-id"] = req.user.userId
     next()
-}, proxy(process.env.AGENT_SERVICE || "http://localhost:8003", proxyOptions))
+}, proxy(process.env.AGENT_SERVICE || "http://127.0.0.1:8003", proxyOptions))
 
 app.use(express.json({ limit: "10mb" }))
 app.use(express.urlencoded({ limit: "10mb", extended: true }))
@@ -37,15 +37,15 @@ app.use("/api", protect)
 app.use("/api/user", userRouter)
 app.get("/me", protect, getCurrentUser)
 
-app.get("/", (req,res)=>{
-
+app.get("/", (req, res) => {
     res.status(200).json({
-        "message":"hello from gateway"
+        "message": "hello from gateway"
     })
 })
 
-
 const PORT = process.env.PORT || 8000
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+const HOST = "0.0.0.0"
+
+app.listen(PORT, HOST, () => {
+    console.log(`Gateway running on ${HOST}:${PORT}`)
 })
