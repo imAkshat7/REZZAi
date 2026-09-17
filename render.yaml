@@ -1,0 +1,97 @@
+services:
+  - type: web
+    name: rezzai-gateway
+    env: docker
+    dockerfilePath: gateway/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: FRONTEND_URL
+        sync: false
+      - key: AUTH_SERVICE
+        value: http://rezzai-auth:8001
+      - key: CHAT_SERVICE
+        value: http://rezzai-chat:8002
+      - key: AGENT_SERVICE
+        value: http://rezzai-agent:8003
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rezzai-redis
+          property: connectionString
+
+  - type: web
+    name: rezzai-auth
+    env: docker
+    dockerfilePath: services/auth/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8001
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rezzai-redis
+          property: connectionString
+
+  - type: web
+    name: rezzai-chat
+    env: docker
+    dockerfilePath: services/chat/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8002
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rezzai-redis
+          property: connectionString
+
+  - type: web
+    name: rezzai-agent
+    env: docker
+    dockerfilePath: services/agent/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8003
+      - key: MONGODB_URI
+        sync: false
+      - key: CHAT_SERVICE
+        value: http://rezzai-chat:8002
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rezzai-redis
+          property: connectionString
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: QDRANT_API_KEY
+        sync: false
+      - key: QDRANT_ENDPOINT
+        sync: false
+
+  - type: redis
+    name: rezzai-redis
+    plan: free
+    ipAllowList: []
