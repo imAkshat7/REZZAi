@@ -1,16 +1,13 @@
 {
-  "name": "backend",
+  "name": "rezzai-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "REZZAi Unified Backend Service",
+  "main": "server.js",
   "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "npm --prefix gateway install && npm --prefix services/auth install && npm --prefix services/chat install && npm --prefix services/agent install"
+  },
   "dependencies": {
     "ioredis": "^6.0.0"
   }
