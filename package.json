@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "postinstall": "npm --prefix gateway install && npm --prefix services/auth install && npm --prefix services/chat install && npm --prefix services/agent install"
+    "postinstall": "npm --prefix gateway install --legacy-peer-deps && npm --prefix services/auth install --legacy-peer-deps && npm --prefix services/chat install --legacy-peer-deps && npm --prefix services/agent install --legacy-peer-deps"
   },
   "dependencies": {
     "ioredis": "^6.0.0"

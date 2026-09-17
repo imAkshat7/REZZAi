@@ -8,7 +8,7 @@ COPY services/auth/package*.json ./services/auth/
 COPY services/chat/package*.json ./services/chat/
 COPY services/agent/package*.json ./services/agent/
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
