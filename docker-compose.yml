@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: rezzai-redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: rezzai-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - AUTH_SERVICE=http://auth-service:8001
+      - CHAT_SERVICE=http://chat-service:8002
+      - AGENT_SERVICE=http://agent-service:8003
+      - FRONTEND_URL=http://localhost:5173
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - auth-service
+      - chat-service
+      - agent-service
+    restart: always
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    container_name: rezzai-auth
+    ports:
+      - "8001:8001"
+    environment:
+      - PORT=8001
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: always
+
+  chat-service:
+    build:
+      context: .
+      dockerfile: services/chat/Dockerfile
+    container_name: rezzai-chat
+    ports:
+      - "8002:8002"
+    environment:
+      - PORT=8002
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    restart: always
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: services/agent/Dockerfile
+    container_name: rezzai-agent
+    ports:
+      - "8003:8003"
+    environment:
+      - PORT=8003
+      - CHAT_SERVICE=http://chat-service:8002
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+      - chat-service
+    restart: always

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+serviceAccountKey.json
+*.pem
+*.key
+
+# Logs and runtime output
+logs/
+*.log
+*.pid
+*.pid.lock
+
+# Build and coverage output
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Local tooling and operating-system files
+.cache/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
