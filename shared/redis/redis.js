@@ -1,22 +1,36 @@
 import Redis from "ioredis"
 
-const redisUrl = process.env.REDIS_URL?.trim().replace(/^https?:\/\//, "redis://") || "redis://localhost:6379"
-const redis = new Redis(redisUrl, {
-    maxRetriesPerRequest: null,
-    retryStrategy(times) {
-        return Math.min(times * 200, 3000)
-    }
-})
+let redisUrl = process.env.REDIS_URL?.trim() || "redis://localhost:6379"
+
+if (redisUrl.startsWith("https://")) {
+	redisUrl = redisUrl.replace(/^https:\/\//, "rediss://")
+} else if (redisUrl.startsWith("http://")) {
+	redisUrl = redisUrl.replace(/^http:\/\//, "redis://")
+}
+
+const redisOptions = {
+	maxRetriesPerRequest: null,
+	retryStrategy(times) {
+		return Math.min(times * 200, 3000)
+	}
+}
+
+if (redisUrl.startsWith("rediss://")) {
+	redisOptions.tls = {
+		rejectUnauthorized: false
+	}
+}
+
+const redis = new Redis(redisUrl, redisOptions)
 
 redis.on("connect", () => {
-    console.log("redis connected")
+	console.log("redis connected")
 })
 
 redis.on("error", (err) => {
-    // Only log distinct warnings if redis was previously ready
-    if (err?.message) {
-        console.warn("Redis warning:", err.message)
-    }
+	if (err?.message) {
+		console.warn("Redis warning:", err.message)
+	}
 })
 
 export default redis
