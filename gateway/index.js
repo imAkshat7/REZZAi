@@ -19,20 +19,26 @@ app.use(cors({
 }))
 
 
-const proxyOptions = {
+const makeProxyOptions = (serviceName) => ({
     parseReqBody: false,
-    limit: "10mb"
-}
+    limit: "10mb",
+    proxyErrorHandler: (err, res, next) => {
+        if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
+            return res.status(503).json({ message: `${serviceName} is temporarily unavailable. Please try again.` })
+        }
+        next(err)
+    }
+})
 
-app.use("/auth", proxy(process.env.AUTH_SERVICE || "http://127.0.0.1:8001", proxyOptions))
+app.use("/auth", proxy(process.env.AUTH_SERVICE || "http://127.0.0.1:8001", makeProxyOptions("Auth service")))
 app.use("/chat", protect, (req, res, next) => {
     req.headers["x-user-id"] = req.user.userId
     next()
-}, proxy(process.env.CHAT_SERVICE || "http://127.0.0.1:8002", proxyOptions))
+}, proxy(process.env.CHAT_SERVICE || "http://127.0.0.1:8002", makeProxyOptions("Chat service")))
 app.use("/agent", protect, (req, res, next) => {
     req.headers["x-user-id"] = req.user.userId
     next()
-}, proxy(process.env.AGENT_SERVICE || "http://127.0.0.1:8003", proxyOptions))
+}, proxy(process.env.AGENT_SERVICE || "http://127.0.0.1:8003", makeProxyOptions("Agent service")))
 
 // Body parsing only for gateway-owned routes (not proxied routes)
 app.use("/api", express.json({ limit: "10mb" }), express.urlencoded({ limit: "10mb", extended: true }), protect)

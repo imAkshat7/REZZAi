@@ -60,12 +60,12 @@ startSubService("Agent Service", path.join(__dirname, "services/agent/index.js")
 	CHAT_SERVICE: CHAT_SERVICE_URL
 })
 
-// Start gateway AFTER a 5s delay so auth/chat/agent have time to bind their ports
-// This prevents 'request aborted' errors from Render's immediate health checks
+// Gateway starts immediately — proxy error handlers gracefully handle the brief
+// window when upstream services are still initializing (returns 503 instead of crashing)
 startSubService("Gateway Service", path.join(__dirname, "gateway/index.js"), {
 	PORT: GATEWAY_PORT,
 	AUTH_SERVICE: AUTH_SERVICE_URL,
 	CHAT_SERVICE: CHAT_SERVICE_URL,
 	AGENT_SERVICE: AGENT_SERVICE_URL
-}, 5000)
+})
 
