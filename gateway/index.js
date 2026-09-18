@@ -22,6 +22,14 @@ app.use(cors({
 const makeProxyOptions = (serviceName) => ({
     parseReqBody: false,
     limit: "10mb",
+    userResHeaderDecorator(headers, userReq, userRes, proxyRes, proxyResData) {
+        const origin = userReq.headers.origin || process.env.FRONTEND_URL
+        if (origin) {
+            headers["access-control-allow-origin"] = origin
+            headers["access-control-allow-credentials"] = "true"
+        }
+        return headers
+    },
     proxyErrorHandler: (err, res, next) => {
         if (err.code === "ECONNREFUSED" || err.code === "ECONNRESET") {
             return res.status(503).json({ message: `${serviceName} is temporarily unavailable. Please try again.` })
