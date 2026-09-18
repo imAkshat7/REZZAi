@@ -40,6 +40,10 @@ app.use("/api", protect)
 app.use("/api/user", userRouter)
 app.get("/me", protect, getCurrentUser)
 
+app.get("/health", (req, res) => {
+    res.status(200).json({ "Health": "ok" })
+})
+
 app.get("/", (req, res) => {
     res.status(200).json({
         "message": "hello from gateway"
