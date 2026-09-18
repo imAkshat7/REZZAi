@@ -18,8 +18,6 @@ app.use(cors({
     credentials: true
 }))
 
-app.use(express.json({ limit: "10mb" }))
-app.use(express.urlencoded({ limit: "10mb", extended: true }))
 
 const proxyOptions = {
     parseReqBody: false,
@@ -36,7 +34,8 @@ app.use("/agent", protect, (req, res, next) => {
     next()
 }, proxy(process.env.AGENT_SERVICE || "http://127.0.0.1:8003", proxyOptions))
 
-app.use("/api", protect)
+// Body parsing only for gateway-owned routes (not proxied routes)
+app.use("/api", express.json({ limit: "10mb" }), express.urlencoded({ limit: "10mb", extended: true }), protect)
 app.use("/api/user", userRouter)
 app.get("/me", protect, getCurrentUser)
 
