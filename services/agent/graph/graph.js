@@ -6,7 +6,7 @@ import { pdfagent } from "../agents/pdf.agent.js"
 import { pptagent } from "../agents/ppt.agent.js"
 import { searchagent } from "../agents/search.agent.js"
 import { codingagent } from "../agents/coding.agents.js"
-import { imageagent } from "../agents/image agent.js"
+import { imageagent } from "../agents/imageGen.agent.js"
 import { imageAnalyzer } from "../agents/imageanalizer.agent.js"
 import { pdfRag } from "../agents/pdfRag.agent.js"
 

@@ -114,7 +114,7 @@ export const router = async (state) => {
 	}
 
 	// Check C: Prompt mentions PDF or uploaded document
-	if (/\b(pdf|document|file|roadmap)\b/i.test(lowerPrompt) && !isExplicitPdfCreate) {
+	if (/\b(pdf|document|file)\b/i.test(lowerPrompt) && !isExplicitPdfCreate) {
 		if (pdfCollectionExists) {
 			return { agent: "pdfRag" }
 		}

@@ -1,6 +1,11 @@
 import redis from "../../shared/redis/redis.js"
 
 const getSessionId = (req) => {
+    const authHeader = req.headers.authorization
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        return authHeader.split(" ")[1]
+    }
+
     const sessionCookie = req.headers.cookie
         ?.split(";")
         .map((cookie) => cookie.trim())
@@ -34,3 +39,4 @@ const protect = async (req, res, next) => {
 }
 
 export default protect
+

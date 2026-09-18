@@ -7,6 +7,11 @@ import redis from "../../../shared/redis/redis.js"
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60
 
 const getSessionId = (req) => {
+    const authHeader = req.headers.authorization
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        return authHeader.split(" ")[1]
+    }
+
     const sessionCookie = req.headers.cookie
         ?.split(";")
         .map((cookie) => cookie.trim())
@@ -53,11 +58,12 @@ export const login = async(req,res) =>{
         res.cookie("session_id", sessionId, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: SESSION_TTL_SECONDS * 1000
         })
 
-        return res.status(200).json(user)
+        const userObj = user.toObject ? user.toObject() : user
+        return res.status(200).json({ ...userObj, token: sessionId })
 
     } catch (error) {
         console.error("Google login failed:", error)
@@ -78,7 +84,7 @@ export const logout = async(req,res) => {
         res.clearCookie("session_id", {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax"
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
         })
 
         return res.status(200).json({ message: "Logged out successfully" })
@@ -87,3 +93,4 @@ export const logout = async(req,res) => {
         return res.status(500).json({ message: "Could not log out" })
     }
 }
+

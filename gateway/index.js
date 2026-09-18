@@ -11,9 +11,15 @@ dotenv.config()
 const app = express()
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: (origin, callback) => {
+        // Dynamically allow requesting origin so credentials: true works seamlessly
+        callback(null, true)
+    },
     credentials: true
 }))
+
+app.use(express.json({ limit: "10mb" }))
+app.use(express.urlencoded({ limit: "10mb", extended: true }))
 
 const proxyOptions = {
     parseReqBody: false,
@@ -29,9 +35,6 @@ app.use("/agent", protect, (req, res, next) => {
     req.headers["x-user-id"] = req.user.userId
     next()
 }, proxy(process.env.AGENT_SERVICE || "http://127.0.0.1:8003", proxyOptions))
-
-app.use(express.json({ limit: "10mb" }))
-app.use(express.urlencoded({ limit: "10mb", extended: true }))
 
 app.use("/api", protect)
 app.use("/api/user", userRouter)
@@ -49,3 +52,4 @@ const HOST = "0.0.0.0"
 app.listen(PORT, HOST, () => {
     console.log(`Gateway running on ${HOST}:${PORT}`)
 })
+
