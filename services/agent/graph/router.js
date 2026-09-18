@@ -45,6 +45,9 @@ const getAgentName = (content, userPrompt = "") => {
 	if (/\b(ppt|powerpoint|presentation|slides|create ppt|generate ppt)\b/i.test(promptText)) {
 		return "ppt"
 	}
+	if (/\b(image|images|photo|photos|picture|pictures|pic|pics|wallpaper|wallpapers)\b/i.test(promptText)) {
+		return "search"
+	}
 
 	const text = (Array.isArray(content)
 		? content.map((part) => typeof part === "string" ? part : part?.text || "").join(" ")
@@ -123,6 +126,11 @@ export const router = async (state) => {
 	// Check D: PPT Creation check
 	if (/\b(ppt|powerpoint|presentation|slides|create ppt|generate ppt)\b/i.test(lowerPrompt)) {
 		return { agent: "ppt" }
+	}
+
+	// Check E: Image/photo request in Auto mode -> Route to search to find existing photos on the web
+	if (/\b(image|images|photo|photos|picture|pictures|pic|pics|wallpaper|wallpapers)\b/i.test(lowerPrompt)) {
+		return { agent: "search" }
 	}
 
 	// Fast path keyword check

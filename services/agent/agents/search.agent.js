@@ -54,15 +54,8 @@ const getIndiaTime = () => new Intl.DateTimeFormat("en-IN", {
 
 const isImageRequested = (query) => {
 	const text = String(query || "").toLowerCase()
-	// Do NOT return search images if user is asking to generate/create/make an image
-	if (/\b(generate|create|make|draw|design|render|build)\b/i.test(text)) {
-		return false
-	}
-	// Return search images only if user explicitly asks to show/see/find/search images or photos
-	return /\b(show|see|find|get|search|look|view|give|display)\b.*\b(image|images|photo|photos|picture|pictures|pic|pics|img|imgs|wallpaper)\b/i.test(text) ||
-		/\b(image|images|photo|photos|picture|pictures|pic|pics)\s+of\b/i.test(text)
+	return /\b(image|images|photo|photos|picture|pictures|pic|pics|img|imgs|wallpaper|wallpapers)\b/i.test(text)
 }
-
 
 const topicImageMap = {
 	panda: [
@@ -88,11 +81,22 @@ const getSearchImages = (query, rawImages) => {
 	if (!isImageRequested(query)) return []
 	const text = query.toLowerCase()
 
+	const results = []
 	for (const [key, urls] of Object.entries(topicImageMap)) {
-		if (text.includes(key)) return urls
+		if (text.includes(key)) {
+			results.push(...urls)
+		}
 	}
 
-	return rawImages && rawImages.length > 0 ? rawImages : []
+	if (Array.isArray(rawImages)) {
+		for (const img of rawImages) {
+			if (typeof img === "string" && img.startsWith("http") && !results.includes(img)) {
+				results.push(img)
+			}
+		}
+	}
+
+	return results.slice(0, 4)
 }
 
 
@@ -114,7 +118,11 @@ export const searchagent = async (state) => {
 		}
 	}
 
-	const result = await searchtool.invoke({ query })
+	const searchQuery = isImageRequested(query)
+		? query.replace(/\b(generate|create|make|draw|give me|show me)\b/gi, "").trim() || query
+		: query
+
+	const result = await searchtool.invoke({ query: searchQuery })
 	const searchResults = Array.isArray(result?.results) ? result.results : []
 	const modelResults = compactResults(searchResults)
 	const rawImages = Array.isArray(result?.images)
