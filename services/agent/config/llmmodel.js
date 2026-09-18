@@ -45,11 +45,12 @@ export const getApiKeys = (providerName, prefixes) => {
 }
 
 export class FallbackModelWrapper {
-	constructor(providerName, prefixes, factory, bindings = []) {
+	constructor(providerName, prefixes, factory, bindings = [], fallbackWrapper = null) {
 		this.providerName = providerName
 		this.prefixes = prefixes
 		this.factory = factory
 		this.bindings = bindings
+		this.fallbackWrapper = fallbackWrapper
 	}
 
 	_createBoundModel(apiKey) {
@@ -60,10 +61,14 @@ export class FallbackModelWrapper {
 		return model
 	}
 
-	async executeWithFallback(actionName, fn) {
+	async executeWithFallback(actionName, fn, input, options) {
 		const keys = getApiKeys(this.providerName, this.prefixes)
 
 		if (keys.length === 0) {
+			if (this.fallbackWrapper) {
+				console.warn(`[${this.providerName}] No keys. Falling back to ${this.fallbackWrapper.providerName}...`)
+				return await this.fallbackWrapper[actionName](input, options)
+			}
 			const noKeyErr = new Error(
 				`No API keys configured for provider "${this.providerName}". Please check your .env file.`
 			)
@@ -106,41 +111,59 @@ export class FallbackModelWrapper {
 		console.error(`[${this.providerName}] All ${totalKeys} keys failed.`)
 		await sendTelegramLog(errorText, "ERROR")
 
+		if (this.fallbackWrapper) {
+			console.warn(`[${this.providerName}] Falling back to ${this.fallbackWrapper.providerName}...`)
+			return await this.fallbackWrapper[actionName](input, options)
+		}
+
 		throw lastError
 	}
 
 	async invoke(input, options) {
-		return this.executeWithFallback("invoke", (model) => model.invoke(input, options))
+		return this.executeWithFallback("invoke", (model) => model.invoke(input, options), input, options)
 	}
 
 	async stream(input, options) {
-		return this.executeWithFallback("stream", (model) => model.stream(input, options))
+		return this.executeWithFallback("stream", (model) => model.stream(input, options), input, options)
 	}
 
 	bindTools(tools, options) {
 		return new FallbackModelWrapper(this.providerName, this.prefixes, this.factory, [
 			...this.bindings,
 			(m) => m.bindTools(tools, options)
-		])
+		], this.fallbackWrapper)
 	}
 
 	withStructuredOutput(schema, options) {
 		return new FallbackModelWrapper(this.providerName, this.prefixes, this.factory, [
 			...this.bindings,
 			(m) => m.withStructuredOutput(schema, options)
-		])
+		], this.fallbackWrapper)
 	}
 }
 
+export const gemini = new FallbackModelWrapper(
+	"Gemini",
+	["GOOGLE", "GEMINI"],
+	(apiKey) => {
+		return new ChatGoogleGenerativeAI({
+			model: "gemini-2.5-flash",
+			apiKey,
+			temperature: 0,
+			maxRetries: 0
+		})
+	}
+)
+
 export const groq = new FallbackModelWrapper("Groq", ["GROQ"], (apiKey) => {
 	return new ChatGroq({
-		model: "openai/gpt-oss-120b",
+		model: "openai/gpt-oss-20b",
 		apiKey,
 		temperature: 0,
 		maxTokens: undefined,
 		maxRetries: 0
 	})
-})
+}, [], gemini)
 
 export const openrouterCoding = new FallbackModelWrapper(
 	"OpenRouter",
@@ -156,20 +179,9 @@ export const openrouterCoding = new FallbackModelWrapper(
 			maxTokens: 2500,
 			maxRetries: 0
 		})
-	}
-)
-
-export const gemini = new FallbackModelWrapper(
-	"Gemini",
-	["GOOGLE", "GEMINI"],
-	(apiKey) => {
-		return new ChatGoogleGenerativeAI({
-			model: "gemini-3.6-flash",
-			apiKey,
-			temperature: 0,
-			maxRetries: 0
-		})
-	}
+	},
+	[],
+	gemini
 )
 
 export const getModel = (agent) => {

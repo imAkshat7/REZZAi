@@ -22,13 +22,13 @@ user's intent and avoid unnecessary disclaimers or repetition.
 - Never output raw base64 data URIs (such as data:image/png;base64,...). If the user asks for images or visuals, suggest using the Images or Search agent.
 `
 
-const MAX_CONTEXT_CHARACTERS = 24000
+const MAX_CONTEXT_CHARACTERS = 6000
 const compactMemory = (memory) => {
 	let characters = 0
 	const compacted = []
 
 	for (const message of [...memory].reverse()) {
-		const content = String(message?.content || "").slice(0, 2400)
+		const content = String(message?.content || "").slice(0, 1200)
 		if (!content || characters + content.length > MAX_CONTEXT_CHARACTERS) break
 		compacted.unshift([
 			message.role === "assistant" ? "ai" : "human",
