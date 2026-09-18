@@ -40,19 +40,7 @@ const formatMarkdown = (data, pptUrl) => {
 		md += `\n`
 	}
 
-	md += `**${slideCount} slides generated**\n\n`
-
-	if (Array.isArray(data.slides)) {
-		data.slides.forEach((s, idx) => {
-			md += `## ${idx + 1}. ${s.title}\n`
-			if (Array.isArray(s.points)) {
-				s.points.forEach((p) => {
-					md += `- ${p}\n`
-				})
-			}
-			md += `\n`
-		})
-	}
+	md += `Your PowerPoint presentation has been compiled with ${slideCount} slides. Click the Canvas card below to view and download it.\n\n`
 
 	if (pptUrl) {
 		md += `[PPT_DOCUMENT](${pptUrl})\n`
