@@ -166,6 +166,10 @@ export const generatePdf = (data) => {
 					})
 			}
 
+			// Reset doc.y after footer loop — PDFKit auto-adds a blank page if
+			// doc.y > page.maxY() when doc.end() is called. The footer text
+			// pushes doc.y past the margin boundary on the last switched page.
+			doc.y = MARGIN
 			doc.end()
 		} catch (error) {
 			reject(error)
