@@ -31,6 +31,8 @@ Rules:
 `
 
 const formatMarkdown = (data, pptUrl) => {
+	const slideCount = Array.isArray(data.slides) ? data.slides.length : 0
+
 	let md = `# ${data.title || "Generated Presentation"}\n`
 	if (data.subtitle) {
 		md += `*${data.subtitle}*\n\n`
@@ -38,19 +40,16 @@ const formatMarkdown = (data, pptUrl) => {
 		md += `\n`
 	}
 
+	md += `**${slideCount} slides generated**\n\n`
+
 	if (Array.isArray(data.slides)) {
 		data.slides.forEach((s, idx) => {
-			md += `## ${idx + 1}. ${s.title}\n`
-			if (Array.isArray(s.points)) {
-				s.points.forEach((p) => {
-					md += `- ${p}\n`
-				})
-			}
-			md += `\n`
+			md += `${idx + 1}. ${s.title}\n`
 		})
 	}
 
-	md += `Your PowerPoint presentation has been compiled. Click the Canvas card below or use the side screen to view and download it.\n\n`
+	md += `\nYour PowerPoint presentation has been compiled. Click the Canvas card below or use the side screen to view and download it.\n\n`
+
 	if (pptUrl) {
 		md += `[PPT_DOCUMENT](${pptUrl})\n`
 	}
@@ -59,6 +58,7 @@ const formatMarkdown = (data, pptUrl) => {
 	}
 	return md.trim()
 }
+
 
 export const pptagent = async (state) => {
 	const prompt = String(state?.prompt || "").trim()

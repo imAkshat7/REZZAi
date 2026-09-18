@@ -104,7 +104,17 @@ export const generateResponse = async (req, res) => {
 		})
 		const content = getResponseText(result.aiResponse)
 		const images = Array.isArray(result.images) ? result.images : []
-		const responseContent = content.trim() || (images.length > 0
+
+		// Extract embedded metadata comments (e.g. <!-- ppt_data:{...} -->)
+		// Strip them from the saved message so they never appear in chat history
+		let metadata = {}
+		const pptMatch = content.match(/<!--\s*ppt_data:(.*?)\s*-->/s)
+		if (pptMatch) {
+			try { metadata.pptData = JSON.parse(pptMatch[1]) } catch {}
+		}
+		const cleanContent = content.replace(/<!--\s*ppt_data:.*?\s*-->/s, "").trim()
+
+		const responseContent = cleanContent || (images.length > 0
 			? "## Images found\n\nHere are some images I found online."
 			: "")
 
@@ -131,7 +141,8 @@ export const generateResponse = async (req, res) => {
 			content: responseContent,
 			images,
 			message: savedMessage,
-			title
+			title,
+			metadata  // contains pptData, etc. — used by frontend canvas, never shown in chat
 		})
 	} catch (error) {
 		console.error("Generate agent response failed:", error)
