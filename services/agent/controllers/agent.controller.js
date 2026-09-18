@@ -105,16 +105,14 @@ export const generateResponse = async (req, res) => {
 		const content = getResponseText(result.aiResponse)
 		const images = Array.isArray(result.images) ? result.images : []
 
-		// Extract embedded metadata comments (e.g. <!-- ppt_data:{...} -->)
-		// Strip them from the saved message so they never appear in chat history
+		// Extract metadata if present
 		let metadata = {}
 		const pptMatch = content.match(/<!--\s*ppt_data:(.*?)\s*-->/s)
 		if (pptMatch) {
 			try { metadata.pptData = JSON.parse(pptMatch[1]) } catch {}
 		}
-		const cleanContent = content.replace(/<!--\s*ppt_data:.*?\s*-->/s, "").trim()
 
-		const responseContent = cleanContent || (images.length > 0
+		const responseContent = content || (images.length > 0
 			? "## Images found\n\nHere are some images I found online."
 			: "")
 
@@ -123,7 +121,13 @@ export const generateResponse = async (req, res) => {
 		}
 
 		const savedMessage = await saveMessage(id, userId, responseContent, "assistant", images)
-		await addMemory(id, { role: "assistant", content: responseContent })
+
+		// Keep Redis LLM memory clean of heavy base64 and raw metadata comments
+		const memoryContent = responseContent
+			.replace(/\[(?:PPT_DOCUMENT|PDF_DOCUMENT)\]\([^)]+\)/g, "")
+			.replace(/<!--\s*(?:pdf|ppt|ppt_data):[\s\S]*?-->/gi, "")
+			.trim()
+		await addMemory(id, { role: "assistant", content: memoryContent || "Generated artifact." })
 		let title
 
 		if (shouldSuggestTitle) {
