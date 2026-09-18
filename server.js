@@ -16,22 +16,37 @@ const AUTH_SERVICE_URL = process.env.AUTH_SERVICE || `http://127.0.0.1:${AUTH_PO
 const CHAT_SERVICE_URL = process.env.CHAT_SERVICE || `http://127.0.0.1:${CHAT_PORT}`
 const AGENT_SERVICE_URL = process.env.AGENT_SERVICE || `http://127.0.0.1:${AGENT_PORT}`
 
-function startSubService(name, scriptPath, customEnv = {}) {
+function startSubService(name, scriptPath, customEnv = {}, restartDelay = 0) {
 	const childEnv = { ...process.env, ...customEnv }
-	console.log(`Starting ${name}...`)
 
-	const child = fork(scriptPath, [], {
-		env: childEnv,
-		stdio: "inherit"
-	})
+	const launch = (attempt = 1) => {
+		console.log(`Starting ${name}${attempt > 1 ? ` (attempt ${attempt})` : ""}...`)
 
-	child.on("exit", (code) => {
-		console.error(`${name} exited with code ${code}`)
-	})
+		const child = fork(scriptPath, [], {
+			env: childEnv,
+			stdio: "inherit"
+		})
 
-	return child
+		child.on("exit", (code) => {
+			if (code === 0) return
+			console.error(`${name} exited with code ${code}`)
+			const delay = Math.min(attempt * 2000, 10000)
+			console.log(`Restarting ${name} in ${delay / 1000}s...`)
+			setTimeout(() => launch(attempt + 1), delay)
+		})
+
+		return child
+	}
+
+	if (restartDelay > 0) {
+		setTimeout(() => launch(), restartDelay)
+		return null
+	}
+
+	return launch()
 }
 
+// Start sub-services first
 startSubService("Auth Service", path.join(__dirname, "services/auth/index.js"), {
 	PORT: AUTH_PORT
 })
@@ -45,9 +60,12 @@ startSubService("Agent Service", path.join(__dirname, "services/agent/index.js")
 	CHAT_SERVICE: CHAT_SERVICE_URL
 })
 
+// Start gateway AFTER a 5s delay so auth/chat/agent have time to bind their ports
+// This prevents 'request aborted' errors from Render's immediate health checks
 startSubService("Gateway Service", path.join(__dirname, "gateway/index.js"), {
 	PORT: GATEWAY_PORT,
 	AUTH_SERVICE: AUTH_SERVICE_URL,
 	CHAT_SERVICE: CHAT_SERVICE_URL,
 	AGENT_SERVICE: AGENT_SERVICE_URL
-})
+}, 5000)
+
